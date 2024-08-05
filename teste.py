@@ -5,6 +5,9 @@ from scipy.stats import fisk, norm
 import matplotlib.pyplot as plt
 # import numpy as np
 
+file_path_etp = 'dados/ETP_HARVREAVES_TERRACLIMATE.xlsx'
+file_path_prp = 'dados/PRP_TERRACLIMATE.xlsx'
+
 def extrair_dados(path_etp, path_prp, acumulado=1):
     # Leitura dos dados de evapotranspiração potencial (ETP)
     df_etp = pd.read_excel(path_etp)
@@ -27,7 +30,7 @@ def extrair_dados(path_etp, path_prp, acumulado=1):
     df = pd.DataFrame({'data': df_merged['data'], 'dados': df_merged['balanco_hidrico']})
 
     df.set_index('data', inplace = True)
-    
+
     return df
 
 dados = extrair_dados(file_path_etp, file_path_prp)
@@ -35,5 +38,4 @@ dados = extrair_dados(file_path_etp, file_path_prp)
 spei_modelado = si.spei(pd.Series(dados['dados']))
 
 teste = pd.DataFrame({'data': spei_modelado.index, 'values': spei_modelado.values})
-teste
-    
+print(teste)
