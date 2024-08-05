@@ -27,15 +27,25 @@ def extrair_dados(path_etp, path_prp, acumulado=1):
     df_merged['data'] = pd.to_datetime(df_merged['data'], format='%Y-%m-%d')
 
     # Criando o DataFrame com os dados do balanço hídrico
-    df = pd.DataFrame({'data': df_merged['data'], 'dados': df_merged['balanco_hidrico']})
-
+    df = pd.DataFrame({
+        'data': df_merged['data'],
+        'dados':pd.to_numeric(df_merged['balanco_hidrico'])
+    })
     df.set_index('data', inplace = True)
 
-    return df
+    #Agregando informações de soma móvel
+    df_preparado = pd.DataFrame({
+        'data' : df['dados'].rolling(acumulado).sum().dropna().index,
+        'dados': df['dados'].rolling(acumulado).sum().dropna().values
+    })
 
-dados = extrair_dados(file_path_etp, file_path_prp)
+    # Setando o index como a coluna data
+    df_preparado.set_index('data', inplace=True)
+
+    return df_preparado
+
+dados = extrair_dados(file_path_etp, file_path_prp, 12)
 
 spei_modelado = si.spei(pd.Series(dados['dados']))
 
-teste = pd.DataFrame({'data': spei_modelado.index, 'values': spei_modelado.values})
-print(teste)
+spei_modelado.plot()
