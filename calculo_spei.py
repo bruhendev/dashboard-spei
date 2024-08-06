@@ -48,4 +48,4 @@ dados = extrair_dados(file_path_etp, file_path_prp, 12)
 
 spei_modelado = si.spei(pd.Series(dados['dados']))
 
-spei_modelado.plot()
+print(spei_modelado)
