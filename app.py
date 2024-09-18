@@ -39,13 +39,10 @@ dados = extrair_dados(file_path_etp, file_path_prp)
 
 # Cálculo do SPEI a cada 10 anos
 spei_10_anos = {}
-intervalos = []
 for year in range(dados.index.year.min(), dados.index.year.max() + 1, 10):
     dados_periodo = dados[dados.index.year.isin(range(year, year + 10))]
     if not dados_periodo.empty:
         spei_10_anos[year] = si.spei(pd.Series(dados_periodo['dados']))
-        intervalo_label = f"{year} a {year + 10 if year + 10 <= dados.index.year.max() else dados.index.year.max()}"
-        intervalos.append({'label': intervalo_label, 'value': year})
 
 # Inicialização do aplicativo Dash
 app = dash.Dash(__name__)
@@ -57,24 +54,23 @@ app.layout = html.Div(children=[
     # Dropdown para selecionar o intervalo de anos
     dcc.Dropdown(
         id='year-dropdown',
-        options=intervalos,
+        options=[{'label': f"{year} a {year + 10}", 'value': year} for year in spei_10_anos.keys()],
         value=min(spei_10_anos.keys()),  # Valor inicial
         clearable=False
     ),
 
-    dcc.Graph(id='spei-graph')
+    dcc.Graph(id='spei-graph'),
+    dcc.Graph(id='boxplot-graph')  # Gráfico Boxplot adicionado aqui
 ])
 
-# Callback para atualizar o gráfico
+# Callback para atualizar o gráfico SPEI
 @app.callback(
     Output('spei-graph', 'figure'),
     Input('year-dropdown', 'value')
 )
 def update_graph(selected_year):
-    # Obtém o SPEI para o ano selecionado
     filtered_data = spei_10_anos[selected_year]
 
-    # Criação do gráfico
     figure = {
         'data': [
             go.Scatter(
@@ -88,6 +84,36 @@ def update_graph(selected_year):
             title=f'SPEI a Cada 10 Anos - {selected_year} a {selected_year + 10}',
             xaxis={'title': 'Data'},
             yaxis={'title': 'SPEI'},
+        )
+    }
+    return figure
+
+# Callback para o Boxplot Anual
+@app.callback(
+    Output('boxplot-graph', 'figure'),
+    Input('year-dropdown', 'value')
+)
+def update_boxplot(selected_year):
+    # Coletar dados para o intervalo selecionado
+    anos_selecionados = range(selected_year, selected_year + 10)
+    dados_anuais = dados[dados.index.year.isin(anos_selecionados)]
+    
+    # Criar uma lista para armazenar os valores do SPEI para cada ano
+    dados_por_ano = [dados_anuais[dados_anuais.index.year == ano]['dados'].values for ano in anos_selecionados]
+
+    # Criar o boxplot
+    figure = {
+        'data': [
+            go.Box(
+                y=dados_por_ano[i],
+                name=str(anos_selecionados[i]),
+                boxmean='sd'  # Adiciona a média e o desvio padrão no boxplot
+            ) for i in range(len(dados_por_ano))
+        ],
+        'layout': go.Layout(
+            title='Boxplot Anual do SPEI',
+            yaxis={'title': 'SPEI'},
+            xaxis={'title': 'Ano'}
         )
     }
     return figure
