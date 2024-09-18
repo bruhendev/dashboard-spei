@@ -40,15 +40,6 @@ file_path_prp = 'dados/PRP_TERRACLIMATE.xlsx'
 dados_1 = extrair_dados(file_path_etp, file_path_prp, 1)
 spei_1 = si.spei(pd.Series(dados_1['dados']))
 
-dados_3 = extrair_dados(file_path_etp, file_path_prp, 3)
-spei_3 = si.spei(pd.Series(dados_3['dados']))
-
-dados_6 = extrair_dados(file_path_etp, file_path_prp, 6)
-spei_6 = si.spei(pd.Series(dados_6['dados']))
-
-dados_12 = extrair_dados(file_path_etp, file_path_prp, 12)
-spei_12 = si.spei(pd.Series(dados_12['dados']))
-
 # Inicialização do aplicativo Dash
 app = dash.Dash(__name__)
 
@@ -74,63 +65,6 @@ app.layout = html.Div(children=[
             )
         }
     ),
-
-    dcc.Graph(
-        id='spei-3-graph',
-        figure={
-            'data': [
-                go.Scatter(
-                    x=spei_3.index,
-                    y=spei_3,
-                    mode='lines',
-                    name='SPEI-3'
-                )
-            ],
-            'layout': go.Layout(
-                title='SPEI-3 ao Longo do Tempo',
-                xaxis={'title': 'Data'},
-                yaxis={'title': 'SPEI'},
-            )
-        }
-    ),
-
-    dcc.Graph(
-        id='spei-6-graph',
-        figure={
-            'data': [
-                go.Scatter(
-                    x=spei_6.index,
-                    y=spei_6,
-                    mode='lines',
-                    name='SPEI-6'
-                )
-            ],
-            'layout': go.Layout(
-                title='SPEI-6 ao Longo do Tempo',
-                xaxis={'title': 'Data'},
-                yaxis={'title': 'SPEI'},
-            )
-        }
-    ),
-
-    dcc.Graph(
-        id='spei-12-graph',
-        figure={
-            'data': [
-                go.Scatter(
-                    x=spei_12.index,
-                    y=spei_12,
-                    mode='lines',
-                    name='SPEI-12'
-                )
-            ],
-            'layout': go.Layout(
-                title='SPEI-12 ao Longo do Tempo',
-                xaxis={'title': 'Data'},
-                yaxis={'title': 'SPEI'},
-            )
-        }
-    )
 ])
 
 # Executa o servidor
