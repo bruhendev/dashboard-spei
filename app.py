@@ -58,7 +58,9 @@ app.layout = html.Div(children=[
     dcc.Dropdown(
         id='ano-dropdown',
         options=[
-            {'label': f'{ano} - {ano + 9}', 'value': f'{ano}-{ano + 9}'} for ano in range(1981, 2023, 10)
+            {'label': f'{ano} a {ano + 10}', 'value': f'{ano}-{ano + 9}'} for ano in range(1981, 2012, 10)
+        ] + [
+            {'label': '2021 a 2022', 'value': '2021-2022'}
         ],
         value='1981-1990',  # Valor padrão
         clearable=False
@@ -82,13 +84,19 @@ def atualizar_grafico(intervalo):
                 x=spei_filtrado.index,
                 y=spei_filtrado.values,
                 mode='lines',
-                name=f'SPEI de {ano_inicial} a {ano_final}'
+                name=f'SPEI de {ano_inicial} a {ano_final + 1}'
             )
         ],
         'layout': go.Layout(
             title=f'SPEI de {ano_inicial} a {ano_final}',
-            xaxis={'title': 'Data'},
-            yaxis={'title': 'SPEI'},
+            xaxis={
+                'title': 'Data',
+                'range': [spei_filtrado.index.min() - pd.DateOffset(months=1), spei_filtrado.index.max() + pd.DateOffset(months=1)]  # Adiciona margem de 1 mês
+            },
+            yaxis={
+                'title': 'SPEI',
+                'range': [-3, 3]  # Fixando o eixo Y entre -3 e 3
+            },
             hovermode='closest'
         )
     }
