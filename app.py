@@ -66,7 +66,8 @@ app.layout = html.Div(children=[
     dcc.Graph(id='spei-1-graph'),
     dcc.Graph(id='boxplot-graph'),
     dcc.Graph(id='barras-graph'),
-    dcc.Graph(id='heatmap-graph')
+    dcc.Graph(id='heatmap-graph'),
+    dcc.Graph(id='anomalia-graph')  # Novo gráfico para anomalias
 ])
 
 # Callback para atualizar os gráficos
@@ -74,7 +75,8 @@ app.layout = html.Div(children=[
     [Output('spei-1-graph', 'figure'),
      Output('boxplot-graph', 'figure'),
      Output('barras-graph', 'figure'),
-     Output('heatmap-graph', 'figure')],
+     Output('heatmap-graph', 'figure'),
+     Output('anomalia-graph', 'figure')],  # Adicione o gráfico de anomalia
     Input('ano-dropdown', 'value')
 )
 def atualizar_graficos(intervalo):
@@ -135,11 +137,8 @@ def atualizar_graficos(intervalo):
     heatmap_data = spei_1.resample('M').mean().reset_index()
     heatmap_data['year'] = heatmap_data['data'].dt.year
     heatmap_data['month'] = heatmap_data['data'].dt.month
+    heatmap_data['dados'] = heatmap_data[0]  # Ajuste se necessário
 
-    # Renomear a coluna para 'dados'
-    heatmap_data.rename(columns={0: 'dados'}, inplace=True)  # Ajuste se necessário, dependendo do formato da sua série
-
-    # Usando pivot_table ao invés de pivot
     heatmap_matrix = heatmap_data.pivot_table(index='month', columns='year', values='dados')
 
     heatmap_figure = {
@@ -151,15 +150,35 @@ def atualizar_graficos(intervalo):
                 colorscale='Viridis'
             )
         ],
-    'layout': go.Layout(
-        title='Heatmap de SPEI por Mês e Ano',
-        xaxis={'title': 'Ano'},
-        yaxis={'title': 'Mês', 'tickvals': list(range(1, 13)), 'ticktext': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']}
-    )
-}
+        'layout': go.Layout(
+            title='Heatmap de SPEI por Mês e Ano',
+            xaxis={'title': 'Ano'},
+            yaxis={'title': 'Mês', 'tickvals': list(range(1, 13)), 'ticktext': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']}
+        )
+    }
 
+    # Gráfico de anomalia
+    media_historica = spei_1.mean()
+    anomalias = spei_1 - media_historica  # Calcula as anomalias
+    anomalia_figure = {
+        'data': [
+            go.Scatter(
+                x=anomalias.index,
+                y=anomalias.values,
+                mode='lines',
+                name='Anomalias de SPEI',
+                line=dict(color='orange')
+            )
+        ],
+        'layout': go.Layout(
+            title='Anomalias de SPEI ao longo do tempo',
+            xaxis={'title': 'Data'},
+            yaxis={'title': 'Anomalia SPEI'},
+            hovermode='closest'
+        )
+    }
 
-    return linha_figure, boxplot_figure, barras_figure, heatmap_figure
+    return linha_figure, boxplot_figure, barras_figure, heatmap_figure, anomalia_figure  # Adicione o gráfico de anomalia
 
 # Executa o servidor
 if __name__ == '__main__':
