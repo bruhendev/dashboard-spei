@@ -67,7 +67,8 @@ app.layout = html.Div(children=[
     dcc.Graph(id='boxplot-graph'),
     dcc.Graph(id='barras-graph'),
     dcc.Graph(id='heatmap-graph'),
-    dcc.Graph(id='anomalia-graph')  # Novo gráfico para anomalias
+    dcc.Graph(id='anomalia-graph'),  # Gráfico de anomalias
+    dcc.Graph(id='tendencia-graph')   # Novo gráfico para tendência
 ])
 
 # Callback para atualizar os gráficos
@@ -76,7 +77,8 @@ app.layout = html.Div(children=[
      Output('boxplot-graph', 'figure'),
      Output('barras-graph', 'figure'),
      Output('heatmap-graph', 'figure'),
-     Output('anomalia-graph', 'figure')],  # Adicione o gráfico de anomalia
+     Output('anomalia-graph', 'figure'),  # Gráfico de anomalia
+     Output('tendencia-graph', 'figure')],  # Gráfico de tendência
     Input('ano-dropdown', 'value')
 )
 def atualizar_graficos(intervalo):
@@ -178,7 +180,33 @@ def atualizar_graficos(intervalo):
         )
     }
 
-    return linha_figure, boxplot_figure, barras_figure, heatmap_figure, anomalia_figure  # Adicione o gráfico de anomalia
+    # Gráfico de linha com tendência
+    media_movel = spei_1.rolling(window=12).mean()  # Média móvel de 12 meses
+    tendencia_figure = {
+        'data': [
+            go.Scatter(
+                x=spei_1.index,
+                y=spei_1.values,
+                mode='lines',
+                name='SPEI'
+            ),
+            go.Scatter(
+                x=media_movel.index,
+                y=media_movel.values,
+                mode='lines',
+                name='Tendência (Média Móvel)',
+                line=dict(color='red', dash='dash')
+            )
+        ],
+        'layout': go.Layout(
+            title='Evolução do SPEI com Tendência',
+            xaxis={'title': 'Data'},
+            yaxis={'title': 'SPEI'},
+            hovermode='closest'
+        )
+    }
+
+    return linha_figure, boxplot_figure, barras_figure, heatmap_figure, anomalia_figure, tendencia_figure
 
 # Executa o servidor
 if __name__ == '__main__':
