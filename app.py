@@ -78,6 +78,9 @@ def atualizar_grafico(intervalo):
     ano_inicial, ano_final = map(int, intervalo.split('-'))
     spei_filtrado = filtrarPorAno(spei_1, ano_inicial, ano_final)
     
+    # Gera todos os anos dentro do intervalo selecionado
+    anos = list(range(ano_inicial, ano_final + 1))  # De ano_inicial a ano_final
+
     return {
         'data': [
             go.Scatter(
@@ -91,7 +94,9 @@ def atualizar_grafico(intervalo):
             title=f'SPEI de {ano_inicial} a {ano_final}',
             xaxis={
                 'title': 'Data',
-                'range': [spei_filtrado.index.min() - pd.DateOffset(months=1), spei_filtrado.index.max() + pd.DateOffset(months=1)]  # Adiciona margem de 1 mês
+                'tickvals': pd.date_range(start=f'{ano_inicial}-01-01', end=f'{ano_final + 1}-01-01', freq='YS'),
+                'ticktext': [str(ano) for ano in anos],
+                'range': [spei_filtrado.index.min() - pd.DateOffset(months=1), spei_filtrado.index.max() + pd.DateOffset(months=1)]
             },
             yaxis={
                 'title': 'SPEI',
