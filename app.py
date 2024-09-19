@@ -67,13 +67,15 @@ app.layout = html.Div(children=[
     ),
 
     dcc.Graph(id='spei-1-graph'),
-    dcc.Graph(id='boxplot-graph')
+    dcc.Graph(id='boxplot-graph'),
+    dcc.Graph(id='histogram-graph')  # Adicionando o gráfico de histograma
 ])
 
 # Callback para atualizar os gráficos
 @app.callback(
     [Output('spei-1-graph', 'figure'),
-     Output('boxplot-graph', 'figure')],
+     Output('boxplot-graph', 'figure'),
+     Output('histogram-graph', 'figure')],  # Adicionando a saída para o histograma
     Input('ano-dropdown', 'value')
 )
 def atualizar_graficos(intervalo):
@@ -130,7 +132,24 @@ def atualizar_graficos(intervalo):
         )
     }
 
-    return linha_figure, boxplot_figure
+    # Gráfico de histograma
+    histogram_figure = {
+        'data': [
+            go.Histogram(
+                x=spei_filtrado.values,
+                nbinsx=30,  # Número de bins do histograma
+                name='Distribuição de SPEI'
+            )
+        ],
+        'layout': go.Layout(
+            title='Histograma de SPEI',
+            xaxis={'title': 'SPEI'},
+            yaxis={'title': 'Frequência'},
+            bargap=0.2
+        )
+    }
+
+    return linha_figure, boxplot_figure, histogram_figure  # Retornando também o gráfico de histograma
 
 # Executa o servidor
 if __name__ == '__main__':
