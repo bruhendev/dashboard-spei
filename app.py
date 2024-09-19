@@ -68,14 +68,16 @@ app.layout = html.Div(children=[
 
     dcc.Graph(id='spei-1-graph'),
     dcc.Graph(id='boxplot-graph'),
-    dcc.Graph(id='histogram-graph')  # Adicionando o gráfico de histograma
+    dcc.Graph(id='histogram-graph'),  # Gráfico de histograma
+    dcc.Graph(id='bar-graph')  # Adicionando o gráfico de barras
 ])
 
 # Callback para atualizar os gráficos
 @app.callback(
     [Output('spei-1-graph', 'figure'),
      Output('boxplot-graph', 'figure'),
-     Output('histogram-graph', 'figure')],  # Adicionando a saída para o histograma
+     Output('histogram-graph', 'figure'),
+     Output('bar-graph', 'figure')],  # Adicionando a saída para o gráfico de barras
     Input('ano-dropdown', 'value')
 )
 def atualizar_graficos(intervalo):
@@ -149,7 +151,31 @@ def atualizar_graficos(intervalo):
         )
     }
 
-    return linha_figure, boxplot_figure, histogram_figure  # Retornando também o gráfico de histograma
+    # Gráfico de barras acumuladas por ano
+    anos_totais = spei_1.index.year.unique()
+    totais_por_ano = []
+
+    for ano in anos_totais:
+        dados_ano = spei_1[spei_1.index.year == ano]
+        totais_por_ano.append(dados_ano.sum())
+
+    bar_figure = {
+        'data': [
+            go.Bar(
+                x=[str(ano) for ano in anos_totais],
+                y=totais_por_ano,
+                name='Total SPEI Acumulado'
+            )
+        ],
+        'layout': go.Layout(
+            title='Total Acumulado de SPEI por Ano',
+            xaxis={'title': 'Ano'},
+            yaxis={'title': 'Total SPEI'},
+            barmode='group'
+        )
+    }
+
+    return linha_figure, boxplot_figure, histogram_figure, bar_figure  # Retornando todos os gráficos
 
 # Executa o servidor
 if __name__ == '__main__':
