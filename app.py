@@ -57,27 +57,24 @@ app.layout = html.Div(children=[
 
     dcc.Dropdown(
         id='ano-dropdown',
-        options=[
-            {'label': f'{ano} a {ano + 10}', 'value': f'{ano}-{ano + 9}'} for ano in range(1981, 2012, 10)
-        ] + [
-            {'label': '2021 a 2022', 'value': '2021-2022'}
-        ],
+        options=[{'label': f'{ano} a {ano + 10}', 'value': f'{ano}-{ano + 9}'} for ano in range(1981, 2012, 10)] +
+                 [{'label': '2021 a 2022', 'value': '2021-2022'}],
         value='1981-1990',  # Valor padrão
         clearable=False
     ),
 
     dcc.Graph(id='spei-1-graph'),
     dcc.Graph(id='boxplot-graph'),
-    dcc.Graph(id='histogram-graph'),  # Gráfico de histograma
-    dcc.Graph(id='bar-graph')  # Adicionando o gráfico de barras
+    dcc.Graph(id='barras-graph'),
+    dcc.Graph(id='heatmap-graph')
 ])
 
 # Callback para atualizar os gráficos
 @app.callback(
     [Output('spei-1-graph', 'figure'),
      Output('boxplot-graph', 'figure'),
-     Output('histogram-graph', 'figure'),
-     Output('bar-graph', 'figure')],  # Adicionando a saída para o gráfico de barras
+     Output('barras-graph', 'figure'),
+     Output('heatmap-graph', 'figure')],
     Input('ano-dropdown', 'value')
 )
 def atualizar_graficos(intervalo):
@@ -96,16 +93,8 @@ def atualizar_graficos(intervalo):
         ],
         'layout': go.Layout(
             title=f'SPEI de {ano_inicial} a {ano_final}',
-            xaxis={
-                'title': 'Data',
-                'tickvals': pd.date_range(start=f'{ano_inicial}-01-01', end=f'{ano_final + 1}-01-01', freq='YS'),
-                'ticktext': [str(ano) for ano in range(ano_inicial, ano_final + 1)],
-                'range': [spei_filtrado.index.min() - pd.DateOffset(months=1), spei_filtrado.index.max() + pd.DateOffset(months=1)]
-            },
-            yaxis={
-                'title': 'SPEI',
-                'range': [-3, 3]
-            },
+            xaxis={'title': 'Data', 'range': [spei_filtrado.index.min() - pd.DateOffset(months=1), spei_filtrado.index.max() + pd.DateOffset(months=1)]},
+            yaxis={'title': 'SPEI', 'range': [-3, 3]},
             hovermode='closest'
         )
     }
@@ -113,69 +102,64 @@ def atualizar_graficos(intervalo):
     # Gráfico de boxplot por ano
     anos = range(ano_inicial, ano_final + 1)
     boxplot_data = []
-
     for ano in anos:
-        # Filtrando os dados para o ano específico
         dados_ano = spei_filtrado[spei_filtrado.index.year == ano]
-        boxplot_data.append(go.Box(
-            y=dados_ano.values,
-            name=str(ano),
-            boxmean='sd'
-        ))
+        boxplot_data.append(go.Box(y=dados_ano.values, name=str(ano), boxmean='sd'))
 
     boxplot_figure = {
         'data': boxplot_data,
         'layout': go.Layout(
             title=f'Boxplot de SPEI de {ano_inicial} a {ano_final}',
-            yaxis={
-                'title': 'SPEI',
-                'range': [-3, 3]
-            }
-        )
-    }
-
-    # Gráfico de histograma
-    histogram_figure = {
-        'data': [
-            go.Histogram(
-                x=spei_filtrado.values,
-                nbinsx=30,  # Número de bins do histograma
-                name='Distribuição de SPEI'
-            )
-        ],
-        'layout': go.Layout(
-            title='Histograma de SPEI',
-            xaxis={'title': 'SPEI'},
-            yaxis={'title': 'Frequência'},
-            bargap=0.2
+            yaxis={'title': 'SPEI', 'range': [-3, 3]}
         )
     }
 
     # Gráfico de barras acumuladas por ano
-    anos_totais = spei_1.index.year.unique()
-    totais_por_ano = []
-
-    for ano in anos_totais:
-        dados_ano = spei_1[spei_1.index.year == ano]
-        totais_por_ano.append(dados_ano.sum())
-
-    bar_figure = {
+    totais_por_ano = spei_filtrado.resample('Y').sum()
+    barras_figure = {
         'data': [
             go.Bar(
-                x=[str(ano) for ano in anos_totais],
-                y=totais_por_ano,
+                x=totais_por_ano.index.year,
+                y=totais_por_ano.values,
                 name='Total SPEI Acumulado'
             )
         ],
         'layout': go.Layout(
-            title='Total Acumulado de SPEI por Ano',
+            title='Total de SPEI Acumulado por Ano',
             xaxis={'title': 'Ano'},
-            yaxis={'title': 'Total SPEI'},
-            barmode='group'
+            yaxis={'title': 'Total SPEI'}
         )
     }
 
-    return linha_figure, boxplot_figure, histogram_figure, bar_figure  # Retornando todos os gráficos
+    # Gráfico de calor (heatmap) de SPEI por mês e ano
+    heatmap_data = spei_1.resample('M').mean().reset_index()
+    heatmap_data['year'] = heatmap_data['data'].dt.year
+    heatmap_data['month'] = heatmap_data['data'].dt.month
+
+    # Renomear a coluna para 'dados'
+    heatmap_data.rename(columns={0: 'dados'}, inplace=True)  # Ajuste se necessário, dependendo do formato da sua série
+
+    # Usando pivot_table ao invés de pivot
+    heatmap_matrix = heatmap_data.pivot_table(index='month', columns='year', values='dados')
+
+    heatmap_figure = {
+        'data': [
+            go.Heatmap(
+                z=heatmap_matrix.values,
+                x=heatmap_matrix.columns,
+                y=heatmap_matrix.index,
+                colorscale='Viridis'
+            )
+        ],
+    'layout': go.Layout(
+        title='Heatmap de SPEI por Mês e Ano',
+        xaxis={'title': 'Ano'},
+        yaxis={'title': 'Mês', 'tickvals': list(range(1, 13)), 'ticktext': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']}
+    )
+}
+
+
+    return linha_figure, boxplot_figure, barras_figure, heatmap_figure
 
 # Executa o servidor
 if __name__ == '__main__':
