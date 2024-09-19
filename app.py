@@ -66,22 +66,22 @@ app.layout = html.Div(children=[
         clearable=False
     ),
 
-    dcc.Graph(id='spei-1-graph')
+    dcc.Graph(id='spei-1-graph'),
+    dcc.Graph(id='boxplot-graph')
 ])
 
-# Callback para atualizar o gráfico
+# Callback para atualizar os gráficos
 @app.callback(
-    Output('spei-1-graph', 'figure'),
+    [Output('spei-1-graph', 'figure'),
+     Output('boxplot-graph', 'figure')],
     Input('ano-dropdown', 'value')
 )
-def atualizar_grafico(intervalo):
+def atualizar_graficos(intervalo):
     ano_inicial, ano_final = map(int, intervalo.split('-'))
     spei_filtrado = filtrarPorAno(spei_1, ano_inicial, ano_final)
-    
-    # Gera todos os anos dentro do intervalo selecionado
-    anos = list(range(ano_inicial, ano_final + 1))  # De ano_inicial a ano_final
 
-    return {
+    # Gráfico de linha
+    linha_figure = {
         'data': [
             go.Scatter(
                 x=spei_filtrado.index,
@@ -95,16 +95,42 @@ def atualizar_grafico(intervalo):
             xaxis={
                 'title': 'Data',
                 'tickvals': pd.date_range(start=f'{ano_inicial}-01-01', end=f'{ano_final + 1}-01-01', freq='YS'),
-                'ticktext': [str(ano) for ano in anos],
+                'ticktext': [str(ano) for ano in range(ano_inicial, ano_final + 1)],
                 'range': [spei_filtrado.index.min() - pd.DateOffset(months=1), spei_filtrado.index.max() + pd.DateOffset(months=1)]
             },
             yaxis={
                 'title': 'SPEI',
-                'range': [-3, 3]  # Fixando o eixo Y entre -3 e 3
+                'range': [-3, 3]
             },
             hovermode='closest'
         )
     }
+
+    # Gráfico de boxplot por ano
+    anos = range(ano_inicial, ano_final + 1)
+    boxplot_data = []
+
+    for ano in anos:
+        # Filtrando os dados para o ano específico
+        dados_ano = spei_filtrado[spei_filtrado.index.year == ano]
+        boxplot_data.append(go.Box(
+            y=dados_ano.values,
+            name=str(ano),
+            boxmean='sd'
+        ))
+
+    boxplot_figure = {
+        'data': boxplot_data,
+        'layout': go.Layout(
+            title=f'Boxplot de SPEI de {ano_inicial} a {ano_final}',
+            yaxis={
+                'title': 'SPEI',
+                'range': [-3, 3]
+            }
+        )
+    }
+
+    return linha_figure, boxplot_figure
 
 # Executa o servidor
 if __name__ == '__main__':
