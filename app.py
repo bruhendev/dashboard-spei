@@ -4,6 +4,7 @@ import dash
 from dash import dcc, html
 import plotly.graph_objs as go
 from dash.dependencies import Input, Output
+import dash_bootstrap_components as dbc
 
 # Função para extrair dados
 def extrair_dados(path_etp, path_prp, acumulado=1):
@@ -65,29 +66,45 @@ def filtrarPorAno(spei, ano_inicial, ano_final):
     
     return spei[(spei.index.year >= ano_inicial) & (spei.index.year <= ano_final)]
 
-# Inicialização do aplicativo Dash
-app = dash.Dash(__name__)
+# Inicialização do aplicativo Dash com tema Bootstrap
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.DARKLY])
 
 # Layout do aplicativo
-app.layout = html.Div(children=[
-    html.H1(children='Dashboard de SPEI'),
+app.layout = dbc.Container(fluid=True, style={'height': '100vh'}, children=[
+    dbc.Row(dbc.Col(html.H1(children='Dashboard de SPEI', className='text-center text-light'))),
 
-    dcc.Dropdown(
-        id='ano-dropdown',
-        options=[{'label': f'{ano} a {ano + 10}', 'value': f'{ano}-{ano + 9}'} for ano in range(1981, 2012, 10)] +
-                 [{'label': '2021 a 2022', 'value': '2021-2022'}],
-        value='1981-1990',  # Valor padrão
-        clearable=False
-    ),
+    dbc.Row([
+        # Coluna para o combo box
+        dbc.Col(
+            dcc.Dropdown(
+                id='ano-dropdown',
+                options=[{'label': f'{ano} a {ano + 10}', 'value': f'{ano}-{ano + 9}'} for ano in range(1981, 2012, 10)] +
+                         [{'label': '2021 a 2022', 'value': '2021-2022'}],
+                value='1981-1990',  # Valor padrão
+                clearable=False,
+                className='mb-4'
+            ), width=2,  # Ajuste a largura da coluna
+            style={'height': '100%'}  # Ocupa toda a altura
+        ),
 
-    dcc.Graph(id='spei-1-graph'),
-    dcc.Graph(id='boxplot-graph'),
-    dcc.Graph(id='barras-graph'),
-    dcc.Graph(id='heatmap-graph'),
-    dcc.Graph(id='anomalia-graph'),  # Gráfico de anomalias
-    dcc.Graph(id='tendencia-graph'),  # Novo gráfico para tendência
-    dcc.Graph(id='bar-graph')  # Gráfico de barras para ETP e Precipitação
+        # Coluna para os gráficos
+        dbc.Col(
+            children=[
+                dbc.Row([dbc.Col(dcc.Graph(id='spei-1-graph'), width=12)]),
+                dbc.Row([dbc.Col(dcc.Graph(id='boxplot-graph'), width=12)]),
+                dbc.Row([dbc.Col(dcc.Graph(id='barras-graph'), width=12)]),
+                dbc.Row([dbc.Col(dcc.Graph(id='heatmap-graph'), width=12)]),
+                dbc.Row([dbc.Col(dcc.Graph(id='anomalia-graph'), width=12)]),
+                dbc.Row([dbc.Col(dcc.Graph(id='tendencia-graph'), width=12)]),
+                dbc.Row([dbc.Col(dcc.Graph(id='bar-graph'), width=12)]),
+            ],
+            width=10,  # Ajuste a largura da coluna de gráficos
+            style={'overflowY': 'auto', 'height': '100%', 'padding': '1rem'}  # Permite rolagem e ocupa toda a altura
+        )
+    ], style={'height': '100%'})  # Garantir que a linha ocupe 100% da altura
 ])
+
+
 
 # Callback para atualizar os gráficos
 @app.callback(
@@ -97,15 +114,15 @@ app.layout = html.Div(children=[
      Output('heatmap-graph', 'figure'),
      Output('anomalia-graph', 'figure'),
      Output('tendencia-graph', 'figure'),
-     Output('bar-graph', 'figure')],  # Gráfico de barras
+     Output('bar-graph', 'figure')],
     Input('ano-dropdown', 'value')
 )
 def atualizar_graficos(intervalo):
     ano_inicial, ano_final = map(int, intervalo.split('-'))
-    
+
     # Filtrando SPEI
     spei_filtrado = filtrarPorAno(spei_1, ano_inicial, ano_final)
-    
+
     # Filtrando ETP e Precipitação
     df_etp_prp_filtrado = df_etp_prp[(df_etp_prp.index.year >= ano_inicial) & (df_etp_prp.index.year <= ano_final)]
 
@@ -116,14 +133,17 @@ def atualizar_graficos(intervalo):
                 x=spei_filtrado.index,
                 y=spei_filtrado.values,
                 mode='lines',
-                name=f'SPEI de {ano_inicial} a {ano_final + 1}'
+                name=f'SPEI de {ano_inicial} a {ano_final + 1}',
+                line=dict(color='cyan')  # Cor ajustada para o tema escuro
             )
         ],
         'layout': go.Layout(
             title=f'SPEI de {ano_inicial} a {ano_final}',
             xaxis={'title': 'Data', 'range': [spei_filtrado.index.min() - pd.DateOffset(months=1), spei_filtrado.index.max() + pd.DateOffset(months=1)]},
             yaxis={'title': 'SPEI', 'range': [-3, 3]},
-            hovermode='closest'
+            plot_bgcolor='rgba(0,0,0,0)',  # Fundo transparente
+            paper_bgcolor='rgba(0,0,0,0)',  # Fundo transparente
+            font=dict(color='white')  # Cor do texto
         )
     }
 
@@ -148,7 +168,9 @@ def atualizar_graficos(intervalo):
             xaxis={'title': 'Data'},
             yaxis={'title': 'Valor'},
             barmode='group',  # Agrupando barras
-            hovermode='closest'
+            plot_bgcolor='rgba(0,0,0,0)',  # Fundo transparente
+            paper_bgcolor='rgba(0,0,0,0)',  # Fundo transparente
+            font=dict(color='white')  # Cor do texto
         )
     }
 
@@ -163,7 +185,10 @@ def atualizar_graficos(intervalo):
         'data': boxplot_data,
         'layout': go.Layout(
             title=f'Boxplot de SPEI de {ano_inicial} a {ano_final}',
-            yaxis={'title': 'SPEI', 'range': [-3, 3]}
+            yaxis={'title': 'SPEI', 'range': [-3, 3]},
+            plot_bgcolor='rgba(0,0,0,0)',  # Fundo transparente
+            paper_bgcolor='rgba(0,0,0,0)',  # Fundo transparente
+            font=dict(color='white')  # Cor do texto
         )
     }
 
@@ -180,7 +205,10 @@ def atualizar_graficos(intervalo):
         'layout': go.Layout(
             title='Total de SPEI Acumulado por Ano',
             xaxis={'title': 'Ano'},
-            yaxis={'title': 'Total SPEI'}
+            yaxis={'title': 'Total SPEI'},
+            plot_bgcolor='rgba(0,0,0,0)',  # Fundo transparente
+            paper_bgcolor='rgba(0,0,0,0)',  # Fundo transparente
+            font=dict(color='white')  # Cor do texto
         )
     }
 
@@ -204,7 +232,10 @@ def atualizar_graficos(intervalo):
         'layout': go.Layout(
             title='Heatmap de SPEI por Mês e Ano',
             xaxis={'title': 'Ano'},
-            yaxis={'title': 'Mês', 'tickvals': list(range(1, 13)), 'ticktext': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']}
+            yaxis={'title': 'Mês', 'tickvals': list(range(1, 13)), 'ticktext': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']},
+            plot_bgcolor='rgba(0,0,0,0)',  # Fundo transparente
+            paper_bgcolor='rgba(0,0,0,0)',  # Fundo transparente
+            font=dict(color='white')  # Cor do texto
         )
     }
 
@@ -225,7 +256,9 @@ def atualizar_graficos(intervalo):
             title='Anomalias de SPEI ao longo do tempo',
             xaxis={'title': 'Data'},
             yaxis={'title': 'Anomalia SPEI'},
-            hovermode='closest'
+            plot_bgcolor='rgba(0,0,0,0)',  # Fundo transparente
+            paper_bgcolor='rgba(0,0,0,0)',  # Fundo transparente
+            font=dict(color='white')  # Cor do texto
         )
     }
 
@@ -237,7 +270,8 @@ def atualizar_graficos(intervalo):
                 x=spei_1.index,
                 y=spei_1.values,
                 mode='lines',
-                name='SPEI'
+                name='SPEI',
+                line=dict(color='cyan')
             ),
             go.Scatter(
                 x=media_movel.index,
@@ -251,7 +285,9 @@ def atualizar_graficos(intervalo):
             title='Evolução do SPEI com Tendência',
             xaxis={'title': 'Data'},
             yaxis={'title': 'SPEI'},
-            hovermode='closest'
+            plot_bgcolor='rgba(0,0,0,0)',  # Fundo transparente
+            paper_bgcolor='rgba(0,0,0,0)',  # Fundo transparente
+            font=dict(color='white')  # Cor do texto
         )
     }
 
