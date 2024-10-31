@@ -76,19 +76,30 @@ def categorizar_spei(spei_value):
     else:
         return 'Seca extrema'
 
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP, '/assets/styles.css'])
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
-# Card de controles (sem alterações)
+# Card de controles atualizado
 controls = dbc.Card(
     [
         html.Div(
             [
+                dbc.Label("Selecionar intervalo de anos"),
+                dcc.Dropdown(
+                    id='intervalo-dropdown',
+                    options=[
+                        {'label': '5 anos', 'value': '5'},
+                        {'label': '10 anos', 'value': '10'},
+                        {'label': 'Todos os anos', 'value': 'all'}
+                    ],
+                    value='10',  # Padrão para 10 anos
+                    clearable=False,
+                ),
+                # Definindo o dropdown de ano
                 dbc.Label("Selecionar ano"),
                 dcc.Dropdown(
                     id='ano-dropdown',
-                    options=[{'label': f'{ano} a {ano + 10}', 'value': f'{ano}-{ano + 9}'} for ano in range(1981, 2012, 10)] +
-                             [{'label': '2021 a 2022', 'value': '2021-2022'}],
-                    value='1981-1990',
+                    options=[],  # Inicialmente vazio
+                    value=None,  # Inicialmente None
                     clearable=False,
                 ),
             ]
@@ -186,17 +197,57 @@ app.layout = dbc.Container(
 )
 
 @app.callback(
+    [Output('ano-dropdown', 'options'),
+     Output('ano-dropdown', 'value')],  # Adicionando value aqui
+    Input('intervalo-dropdown', 'value')
+)
+def atualizar_ano_dropdown(intervalo):
+    anos_disponiveis = list(range(1981, 2023))  # Supondo que os dados vão até 2022
+    opcoes = []
+    
+    if intervalo == '5':
+        for ano in range(1981, 2023, 5):
+            ano_final = ano + 4
+            if ano_final <= anos_disponiveis[-1]:
+                opcoes.append({'label': f'{ano} a {ano_final}', 'value': f'{ano}-{ano_final}'})
+        if anos_disponiveis[-1] > 1981:
+            opcoes.append({'label': f'{anos_disponiveis[-2]} a {anos_disponiveis[-1]}', 'value': f'{anos_disponiveis[-2]}-{anos_disponiveis[-1]}'})
+            
+    elif intervalo == '10':
+        for ano in range(1981, 2023, 10):
+            ano_final = ano + 9
+            if ano_final <= anos_disponiveis[-1]:
+                opcoes.append({'label': f'{ano} a {ano_final}', 'value': f'{ano}-{ano_final}'})
+        if anos_disponiveis[-1] > 2020:
+            opcoes.append({'label': f'{anos_disponiveis[-2]} a {anos_disponiveis[-1]}', 'value': f'{anos_disponiveis[-2]}-{anos_disponiveis[-1]}'})
+
+    elif intervalo == 'all':
+        opcoes = [{'label': '1981 a 2022', 'value': '1981-2022'}]
+
+    # Define o value como a primeira opção se houver opções
+    valor_default = opcoes[0]['value'] if opcoes else None
+
+    return opcoes, valor_default  # Retornando as opções e o valor padrão
+
+
+@app.callback(
     [Output('spei-graph', 'figure'),
      Output('barras-empilhadas-graph', 'figure'),
-     Output('media-mensal-graph', 'figure'),  # Gráfico de média mensal
+     Output('media-mensal-graph', 'figure'),
      Output('histograma-graph', 'figure'),
      Output('scatter-graph', 'figure'),
-     # Removido Output para o gráfico de área
-     Output('boxplot-graph', 'figure')],  # Adicionado boxplot
+     Output('boxplot-graph', 'figure')],
     Input('ano-dropdown', 'value')
 )
 def atualizar_graficos(intervalo):
-    ano_inicial, ano_final = map(int, intervalo.split('-'))
+    if not intervalo:  # Se não houver intervalo selecionado
+        raise dash.exceptions.PreventUpdate
+
+    if intervalo == '1981-2022':
+        ano_inicial, ano_final = 1981, 2022
+    else:
+        ano_inicial, ano_final = map(int, intervalo.split('-'))
+
     spei_filtrado = filtrar_por_ano(spei_1, ano_inicial, ano_final)
     categorias = spei_filtrado.apply(categorizar_spei)
     dados_ano = spei_filtrado.groupby(spei_filtrado.index.year).apply(lambda x: x.apply(categorizar_spei).value_counts(normalize=True) * 100).unstack(fill_value=0)
@@ -344,7 +395,7 @@ def atualizar_graficos(intervalo):
         )
     }
 
-    return linha_figure, barras_figure, media_mensal_figure, histograma_figure, scatter_figure, boxplot_figure  # Removido area_figure
+    return linha_figure, barras_figure, media_mensal_figure, histograma_figure, scatter_figure, boxplot_figure 
 
 if __name__ == "__main__":
     app.run_server(debug=True, port=8888)
