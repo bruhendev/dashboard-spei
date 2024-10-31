@@ -5,7 +5,7 @@ import pandas as pd
 import plotly.graph_objs as go
 import dash_bootstrap_components as dbc
 
-# Função para extrair dados
+# Função para extrair dados (sem alterações)
 def extrair_dados(path_etp, path_prp, acumulado=1):
     df_etp = pd.read_excel(path_etp).rename(columns={'Hargreaves Potential Evapotranspiration (TerraClimate)': 'data', 'Unnamed: 1': 'dados'})
     df_etp = df_etp.iloc[1:].reset_index(drop=True)
@@ -26,7 +26,7 @@ def extrair_dados(path_etp, path_prp, acumulado=1):
 
     return df_preparado
 
-# Função para extrair dados somente de ETP e precipitação
+# Função para extrair dados somente de ETP e precipitação (sem alterações)
 def extrair_etp_prp(path_etp, path_prp):
     df_etp = pd.read_excel(path_etp).rename(columns={'Hargreaves Potential Evapotranspiration (TerraClimate)': 'data', 'Unnamed: 1': 'ETP'})
     df_prp = pd.read_excel(path_prp).rename(columns={'Precipitation (TerraClimate)': 'data', 'Unnamed: 1': 'Precipitação'})
@@ -42,20 +42,20 @@ def extrair_etp_prp(path_etp, path_prp):
 
     return df_merged
 
-# Caminhos dos arquivos
+# Caminhos dos arquivos (sem alterações)
 file_path_etp = 'dados/ETP_HARVREAVES_TERRACLIMATE.xlsx'
 file_path_prp = 'dados/PRP_TERRACLIMATE.xlsx'
 
-# Extração dos dados e cálculo do SPEI
+# Extração dos dados e cálculo do SPEI (sem alterações)
 dados_1 = extrair_dados(file_path_etp, file_path_prp, 1)
 df_etp_prp = extrair_etp_prp(file_path_etp, file_path_prp)
 spei_1 = si.spei(pd.Series(dados_1['dados']))
 
-# Função para filtrar os anos
+# Função para filtrar os anos (sem alterações)
 def filtrar_por_ano(spei, ano_inicial, ano_final):
     return spei[(spei.index.year >= ano_inicial) & (spei.index.year <= ano_final)]
 
-# Função para categorizar SPEI
+# Função para categorizar SPEI (sem alterações)
 def categorizar_spei(spei_value):
     if spei_value > 2.33:
         return 'Umidade extrema'
@@ -78,7 +78,7 @@ def categorizar_spei(spei_value):
 
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP, '/assets/styles.css'])
 
-# Card de controles
+# Card de controles (sem alterações)
 controls = dbc.Card(
     [
         html.Div(
@@ -97,7 +97,7 @@ controls = dbc.Card(
     body=True,
 )
 
-# Layout do aplicativo
+# Layout do aplicativo (sem alterações)
 app.layout = dbc.Container(
     [
         html.H1("Dashboard de SPEI"),
@@ -170,8 +170,8 @@ app.layout = dbc.Container(
                 dbc.Col(
                     dbc.Card(
                         [
-                            dbc.CardHeader("Área Sob o Gráfico SPEI"),
-                            dcc.Graph(id='area-graph'),
+                            dbc.CardHeader("Boxplot de SPEI por Ano"),
+                            dcc.Graph(id='boxplot-graph'),
                         ],
                         className='card-shadow',
                         style={'marginBottom': '20px'}
@@ -191,7 +191,8 @@ app.layout = dbc.Container(
      Output('media-mensal-graph', 'figure'),  # Gráfico de média mensal
      Output('histograma-graph', 'figure'),
      Output('scatter-graph', 'figure'),
-     Output('area-graph', 'figure')],  # Gráfico de área
+     # Removido Output para o gráfico de área
+     Output('boxplot-graph', 'figure')],  # Adicionado boxplot
     Input('ano-dropdown', 'value')
 )
 def atualizar_graficos(intervalo):
@@ -288,27 +289,6 @@ def atualizar_graficos(intervalo):
         )
     }
 
-    # Gráfico de área
-    area_figure = {
-        'data': [
-            go.Scatter(
-                x=spei_filtrado.index,
-                y=spei_filtrado.values,
-                mode='lines',
-                name='Área Sob o Gráfico SPEI',
-                fill='tozeroy',
-                line=dict(color='orange')
-            )
-        ],
-        'layout': go.Layout(
-            xaxis={'title': 'Data', 'title_font': dict(color='black'), 'tickfont': dict(color='black')},
-            yaxis={'title': 'SPEI', 'title_font': dict(color='black'), 'tickfont': dict(color='black')},
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)',
-            margin=dict(t=20),
-        )
-    }
-
     # Gráfico de histograma
     histograma_figure = {
         'data': [
@@ -339,14 +319,32 @@ def atualizar_graficos(intervalo):
         ],
         'layout': go.Layout(
             xaxis={'title': 'Data', 'title_font': dict(color='black'), 'tickfont': dict(color='black')},
-            yaxis={'title': 'SPEI', 'title_font': dict(color='black'), 'tickfont': dict(color='black')},
+            yaxis={'title': 'SPEI', 'range': [-3, 3],'title_font': dict(color='black'), 'tickfont': dict(color='black')},
             plot_bgcolor='rgba(0,0,0,0)',
             paper_bgcolor='rgba(0,0,0,0)',
             margin=dict(t=20),
         )
     }
 
-    return linha_figure, barras_figure, media_mensal_figure, histograma_figure, scatter_figure, area_figure
+    # Gráfico de boxplot por ano
+    boxplot_figure = {
+        'data': [
+            go.Box(
+                y=spei_filtrado[spei_filtrado.index.year == ano].values,
+                name=str(ano),
+                marker=dict(color='purple')
+            ) for ano in spei_filtrado.index.year.unique()
+        ],
+        'layout': go.Layout(
+            yaxis={'title': 'SPEI', 'range': [-3, 3]},
+            xaxis={'title': 'Ano'},
+            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor='rgba(0,0,0,0)',
+            margin=dict(t=30),
+        )
+    }
+
+    return linha_figure, barras_figure, media_mensal_figure, histograma_figure, scatter_figure, boxplot_figure  # Removido area_figure
 
 if __name__ == "__main__":
     app.run_server(debug=True, port=8888)
