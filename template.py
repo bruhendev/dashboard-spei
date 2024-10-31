@@ -120,7 +120,7 @@ app.layout = dbc.Container(
                     dbc.Card(
                         [
                             dbc.CardHeader("SPEI"),
-                            dcc.Graph(id='spei-graph')
+                            dcc.Graph(id='spei-graph', config={'responsive': True}, style={'width': '100%', 'height': '400px'})
                         ],
                         className='card-shadow',
                     ), md=8),
@@ -133,7 +133,7 @@ app.layout = dbc.Container(
                     dbc.Card(
                         [
                             dbc.CardHeader("Distribuição de Categorias de SPEI"),
-                            dcc.Graph(id='barras-empilhadas-graph'),
+                            dcc.Graph(id='barras-empilhadas-graph', config={'responsive': True}, style={'width': '100%', 'height': '250px'}),
                         ],
                         className='card-shadow',
                         style={'marginTop': '20px', 'marginBottom': '20px'}
@@ -144,7 +144,7 @@ app.layout = dbc.Container(
                     dbc.Card(
                         [
                             dbc.CardHeader("Média Mensal de SPEI"),
-                            dcc.Graph(id='media-mensal-graph'),
+                            dcc.Graph(id='media-mensal-graph', config={'responsive': True}, style={'height': '250px'}),
                         ],
                         className='card-shadow',
                         style={'marginTop': '20px', 'marginBottom': '20px'}
@@ -155,7 +155,7 @@ app.layout = dbc.Container(
                     dbc.Card(
                         [
                             dbc.CardHeader("Histograma de SPEI"),
-                            dcc.Graph(id='histograma-graph'),
+                            dcc.Graph(id='histograma-graph', config={'responsive': True}, style={'height': '250px'}),
                         ],
                         className='card-shadow',
                         style={'marginTop': '20px', 'marginBottom': '20px'}
@@ -171,7 +171,7 @@ app.layout = dbc.Container(
                     dbc.Card(
                         [
                             dbc.CardHeader("Dispersão de SPEI ao longo do tempo"),
-                            dcc.Graph(id='scatter-graph'),
+                            dcc.Graph(id='scatter-graph', config={'responsive': True}, style={'height': '280px'}),
                         ],
                         className='card-shadow',
                         style={'marginBottom': '20px'}
@@ -182,7 +182,7 @@ app.layout = dbc.Container(
                     dbc.Card(
                         [
                             dbc.CardHeader("Boxplot de SPEI por Ano"),
-                            dcc.Graph(id='boxplot-graph'),
+                            dcc.Graph(id='boxplot-graph', config={'responsive': True}, style={'height': '280px'}),
                         ],
                         className='card-shadow',
                         style={'marginBottom': '20px'}
@@ -256,25 +256,38 @@ def atualizar_graficos(intervalo):
 
     # Gráfico de linha SPEI
     linha_figure = {
-        'data': [
-            go.Scatter(
-                x=spei_filtrado.index,
-                y=spei_filtrado.values,
-                mode='lines',
-                name=f'SPEI de {ano_inicial} a {ano_final + 1}',
-                line=dict(color='cyan')
-            )
-        ],
-        'layout': go.Layout(
-            title=f'{ano_inicial} a {ano_final}',
-            xaxis={'title': 'Data', 'title_font': dict(color='black'), 'tickfont': dict(color='black')},
-            yaxis={'title': 'SPEI', 'range': [-3, 3], 'title_font': dict(color='black'), 'tickfont': dict(color='black')},
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='black'),
-            legend=dict(title='Legenda', font=font_style)
+    'data': [
+        go.Scatter(
+            x=spei_filtrado.index,
+            y=spei_filtrado.values,
+            mode='lines',
+            name=f'SPEI de {ano_inicial} a {ano_final + 1}',
+            line=dict(color='gray', width=2)  # Espessura da linha
         )
-    }
+    ],
+    'layout': go.Layout(
+        xaxis={
+            'title': 'Data',
+            'title_font': dict(color='black', size=14),
+            'tickfont': dict(color='black', size=12),
+            'showgrid': True,
+            'gridcolor': 'lightgrey',
+        },
+        yaxis={
+            'title': 'SPEI',
+            'range': [-3, 3],
+            'title_font': dict(color='black', size=14),
+            'tickfont': dict(color='black', size=12),
+            'showgrid': True,
+            'gridcolor': 'lightgrey',
+        },
+        plot_bgcolor='rgba(255, 255, 255, 1)',  # Fundo do gráfico
+        paper_bgcolor='rgba(255, 255, 255, 1)',  # Fundo da área do gráfico
+        font=dict(color='black', size=12),  # Tamanho da fonte,
+        margin=dict(t=40, l=50, r=40, b=50),  # Margens
+        legend=dict(title='Legenda', font=font_style)
+    )
+}
 
     # Dicionário de cores
     cores_categorias = {
@@ -289,33 +302,47 @@ def atualizar_graficos(intervalo):
 
     # Gráfico de barras empilhadas
     barras_figure = {
-        'data': [
-            go.Bar(
-                x=dados_ano.index,
-                y=dados_ano.get(categoria, pd.Series([0] * len(dados_ano.index))),
-                name=categoria,
-                marker=dict(color=cores_categorias[categoria])
-            ) for categoria in [
-                'Umidade extrema',
-                'Umidade severa',
-                'Umidade moderada',
-                'Condição normal',
-                'Seca moderada',
-                'Seca severa',
-                'Seca extrema',             
-                ]
-        ],
-        'layout': go.Layout(
-            barmode='stack',
-            xaxis={'title': 'Ano'},
-            yaxis={'title': 'Porcentagem'},
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='black'),
-            legend=dict(traceorder='normal'),
-            margin=dict(t=20),
-        )
-    }
+    'data': [
+        go.Bar(
+            x=dados_ano.index,
+            y=dados_ano.get(categoria, pd.Series([0] * len(dados_ano.index))),
+            name=categoria,
+            marker=dict(color=cores_categorias[categoria])
+        ) for categoria in [
+            'Umidade extrema',
+            'Umidade severa',
+            'Umidade moderada',
+            'Condição normal',
+            'Seca moderada',
+            'Seca severa',
+            'Seca extrema',             
+        ]
+    ],
+    'layout': go.Layout(
+        barmode='stack',
+        xaxis={
+            'title': 'Ano',
+            'title_font': dict(color='black', size=8),
+            'tickfont': dict(color='black', size=8),
+            'showgrid': True,
+            'gridcolor': 'lightgrey',
+        },
+        yaxis={
+            'title': 'Porcentagem',
+            'title_font': dict(color='black', size=8),
+            'tickfont': dict(color='black', size=8),
+            'showgrid': True,
+            'gridcolor': 'lightgrey',
+        },
+        plot_bgcolor='rgba(255, 255, 255, 1)',  # Fundo do gráfico
+        paper_bgcolor='rgba(255, 255, 255, 1)',  # Fundo da área do gráfico
+        font=dict(color='black', size=12),  # Tamanho da fonte
+        legend=dict(traceorder='normal', font=dict(size=8)),  # Tamanho da fonte da legenda
+        margin=dict(t=20, l=40, r=40, b=40),  # Margens
+        bargap=0.1  # Espaçamento entre as barras
+    )
+}
+
 
     # Gráfico de média mensal
     media_mensal = spei_filtrado.resample('M').mean()
@@ -323,59 +350,100 @@ def atualizar_graficos(intervalo):
     meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
     
     media_mensal_figure = {
-        'data': [
-            go.Bar(
-                x=meses,
-                y=media_mensal_por_mes.values,
-                name='Média Mensal de SPEI',
-                marker=dict(color='blue')
-            )
-        ],
-        'layout': go.Layout(
-            xaxis={'title': 'Meses'},
-            yaxis={'title': 'SPEI'},
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)',
-            margin=dict(t=20),
+    'data': [
+        go.Bar(
+            x=meses,
+            y=media_mensal_por_mes.values,
+            name='Média Mensal de SPEI',
+            marker=dict(color='gray', opacity=0.7)  # Adicionando opacidade
         )
-    }
+    ],
+    'layout': go.Layout(
+        xaxis={
+            'title': 'Meses',
+            'title_font': dict(color='black', size=8),
+            'tickfont': dict(color='black', size=8),
+            'showgrid': True,
+            'gridcolor': 'lightgrey',  # Cor da grade
+        },
+        yaxis={
+            'title': 'SPEI',
+            'title_font': dict(color='black', size=8),
+            'tickfont': dict(color='black', size=8),
+            'showgrid': True,
+            'gridcolor': 'lightgrey',
+        },
+        plot_bgcolor='rgba(255, 255, 255, 1)',  # Fundo do gráfico
+        paper_bgcolor='rgba(255, 255, 255, 1)',  # Fundo da área do gráfico
+        font=dict(color='black', size=8),  # Tamanho da fonte
+        margin=dict(t=20, l=40, r=25, b=40),  # Margens
+    )
+}
 
     # Gráfico de histograma
     histograma_figure = {
         'data': [
             go.Histogram(
                 x=spei_filtrado.values,
-                marker=dict(color='purple'),
-                opacity=0.75
+                marker=dict(color='gray', opacity=0.75)  # Adicionando opacidade
             )
         ],
         'layout': go.Layout(
-            xaxis={'title': 'SPEI', 'title_font': dict(color='black'), 'tickfont': dict(color='black')},
-            yaxis={'title': 'Frequência', 'title_font': dict(color='black'), 'tickfont': dict(color='black')},
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)',
-            margin=dict(t=20),
+            xaxis={
+                'title': 'SPEI',
+                'title_font': dict(color='black', size=8),
+                'tickfont': dict(color='black', size=8),
+                'showgrid': True,
+                'gridcolor': 'lightgrey',  # Cor da grade
+            },
+            yaxis={
+                'title': 'Frequência',
+                'title_font': dict(color='black', size=8),
+                'tickfont': dict(color='black', size=8),
+                'showgrid': True,
+                'gridcolor': 'lightgrey',
+            },
+            plot_bgcolor='rgba(255, 255, 255, 1)',  # Fundo do gráfico
+            paper_bgcolor='rgba(255, 255, 255, 1)',  # Fundo da área do gráfico
+            font=dict(color='black', size=8),  # Tamanho da fonte
+            margin=dict(t=20, l=40, r=25, b=40),  # Margens
         )
     }
 
+
     # Gráfico de dispersão
     scatter_figure = {
-        'data': [
-            go.Scatter(
-                x=spei_filtrado.index,
-                y=spei_filtrado.values,
-                mode='markers',
-                marker=dict(color='green', size=5)
-            )
-        ],
-        'layout': go.Layout(
-            xaxis={'title': 'Data', 'title_font': dict(color='black'), 'tickfont': dict(color='black')},
-            yaxis={'title': 'SPEI', 'range': [-3, 3],'title_font': dict(color='black'), 'tickfont': dict(color='black')},
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)',
-            margin=dict(t=20),
+    'data': [
+        go.Scatter(
+            x=spei_filtrado.index,
+            y=spei_filtrado.values,
+            mode='markers',
+            marker=dict(color='gray', size=7, opacity=0.8)  # Aumentando o tamanho e adicionando opacidade
         )
-    }
+    ],
+    'layout': go.Layout(
+        xaxis={
+            'title': 'Data',
+            'title_font': dict(color='black', size=8),  # Tamanho da fonte do título
+            'tickfont': dict(color='black', size=8),
+            'showgrid': True,
+            'gridcolor': 'lightgrey'  # Cor da grade
+        },
+        yaxis={
+            'title': 'SPEI',
+            'range': [-3, 3],
+            'title_font': dict(color='black', size=8),  # Tamanho da fonte do título
+            'tickfont': dict(color='black', size=8),
+            'showgrid': True,
+            'gridcolor': 'lightgrey'  # Cor da grade
+        },
+        plot_bgcolor='rgba(255, 255, 255, 1)',  # Fundo do gráfico
+        paper_bgcolor='rgba(255, 255, 255, 1)',  # Fundo da área do gráfico
+        margin=dict(t=20, l=40, r=25, b=40),  # Margens
+        font=dict(color='black', size=8)  # Tamanho da fonte
+    )
+}
+
 
     # Gráfico de boxplot por ano
     boxplot_figure = {
@@ -383,15 +451,30 @@ def atualizar_graficos(intervalo):
             go.Box(
                 y=spei_filtrado[spei_filtrado.index.year == ano].values,
                 name=str(ano),
-                marker=dict(color='purple')
+                marker=dict(color='gray'),
+                boxmean='sd'  # Adiciona a média e desvio padrão
             ) for ano in spei_filtrado.index.year.unique()
         ],
         'layout': go.Layout(
-            yaxis={'title': 'SPEI', 'range': [-3, 3]},
-            xaxis={'title': 'Ano'},
-            plot_bgcolor='rgba(0,0,0,0)',
-            paper_bgcolor='rgba(0,0,0,0)',
-            margin=dict(t=30),
+            yaxis={
+                'title': 'SPEI',
+                'range': [-3, 3],
+                'title_font': dict(color='black', size=8),  # Tamanho da fonte do título
+                'tickfont': dict(color='black', size=8),
+                'showgrid': True,
+                'gridcolor': 'lightgrey'  # Cor da grade
+            },
+            xaxis={
+                'title': 'Ano',
+                'title_font': dict(color='black', size=8),  # Tamanho da fonte do título
+                'tickfont': dict(color='black', size=8),
+                'showgrid': True,
+                'gridcolor': 'lightgrey'  # Cor da grade
+            },
+            plot_bgcolor='rgba(255, 255, 255, 1)',  # Fundo do gráfico
+            paper_bgcolor='rgba(255, 255, 255, 1)',  # Fundo da área do gráfico
+            margin=dict(t=30, l=40, r=25, b=40),  # Margens
+            font=dict(color='black', size=8)  # Tamanho da fonte
         )
     }
 
