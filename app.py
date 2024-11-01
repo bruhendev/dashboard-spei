@@ -1,4 +1,5 @@
 import dash
+import os
 from dash import Input, Output, dcc, html
 import spei as si
 import pandas as pd
@@ -481,4 +482,4 @@ def atualizar_graficos(intervalo):
     return linha_figure, barras_figure, media_mensal_figure, histograma_figure, scatter_figure, boxplot_figure 
 
 if __name__ == "__main__":
-    app.run_server(debug=True, port=8888)
+    app.run_server(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 8050)))
