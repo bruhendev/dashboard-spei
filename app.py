@@ -247,7 +247,8 @@ controls = dbc.Card(
         ),
     ],
     body=True,
-    style=CARD_STYLE
+    style=CARD_STYLE,
+    className="mb-4"
 )
 
 # Coordenadas de Paragominas
@@ -276,6 +277,11 @@ mapa_paragominas.update_layout(
 
 app.layout = dbc.Container(
     [
+        html.Meta(
+        name='viewport',
+        content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no'
+    ),
+    
         html.Link(
         rel="stylesheet",
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
@@ -334,7 +340,7 @@ app.layout = dbc.Container(
                     xs=12,
                     sm=12,
                     md=3,  # A coluna de configurações ocupa 3 das 12 colunas do grid
-                    style={'backgroundColor': '#FFFFFF', 'padding': '20px', 'borderRadius': '8px', 'boxShadow': '0 4px 6px rgba(0, 0, 0, 0.1)'}
+                    style={'backgroundColor': '#FFFFFF', 'padding': '20px', 'borderRadius': '8px', 'boxShadow': '0 4px 6px rgba(0, 0, 0, 0.1)', 'marginBottom': '20px'}
                 ),
                 
                 # Coluna para os gráficos (com vários gráficos empilhados verticalmente)
