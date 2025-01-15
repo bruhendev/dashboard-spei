@@ -687,5 +687,5 @@ def atualizar_graficos(intervalo):
     return linha_figure, barras_figure, media_mensal_figure, histograma_figure, scatter_figure, boxplot_figure 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8000)
+    app.run_server(host='0.0.0.0', port=8000)
 
