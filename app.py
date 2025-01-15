@@ -20,7 +20,7 @@ def extrair_dados(path_etp, path_prp, acumulado=1):
     df_merged['balanco_hidrico'] = df_merged['dados_prp'] - df_merged['dados_etp']
     df_merged['data'] = pd.to_datetime(df_merged['data'], format='%Y-%m-%d')
 
-    df = pd.DataFrame({'data': df_merged['data'], 'dados': pd.to_numeric(df_merged['balanco_hidrico'])})
+    df = pd.DataFrame({'data': df_merged['data'], 'dados': pd.to_numeric(df_merged['balanco_hidrico'], errors='coerce')})
     df.set_index('data', inplace=True)
 
     df_preparado = pd.DataFrame({'data': df['dados'].rolling(acumulado).sum().dropna().index,
