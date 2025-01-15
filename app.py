@@ -153,8 +153,10 @@ footer = html.Footer(
                                 style={'color': '#cbd5e1', 'fontSize': '16px', 'maxWidth': '400px', 'lineHeight': '1.6'}
                             )
                         ],
+                        xs=12,
+                        sm=12,
                         md=4,
-                        className="mb-4 mb-md-0"
+                        className="mb-4"
                     ),
                     
                     # Middle Column - Links
@@ -165,8 +167,10 @@ footer = html.Footer(
                             html.A("Instituto de Geociências  - IG", href="https://ig.ufpa.br/", target="_blank", style=FOOTER_LINK_STYLE),
                             html.A(" Programa de Pós-Graduação em Gestão de Risco e Desastre na Amazônia - PPGGRD", href="https://ppggrd.propesp.ufpa.br/", target="_blank", style=FOOTER_LINK_STYLE),
                         ],
+                        xs=12,
+                        sm=12,
                         md=4,
-                        className="mb-4 mb-md-0"
+                        className="mb-4"
                     ),
                     
                     # Right Column - Contact
@@ -190,6 +194,8 @@ footer = html.Footer(
                                 style={'marginTop': '24px'}
                             )
                         ],
+                        xs=12,
+                        sm=12,
                         md=4
                     ),
                 ],
@@ -325,6 +331,8 @@ app.layout = dbc.Container(
                             config={"responsive": True},
                         ),
                     ],  # Coloque o controle aqui novamente se precisar, ou defina conforme o layout desejado
+                    xs=12,
+                    sm=12,
                     md=3,  # A coluna de configurações ocupa 3 das 12 colunas do grid
                     style={'backgroundColor': '#FFFFFF', 'padding': '20px', 'borderRadius': '8px', 'boxShadow': '0 4px 6px rgba(0, 0, 0, 0.1)'}
                 ),
@@ -387,6 +395,8 @@ app.layout = dbc.Container(
                             style={'boxShadow': '0 4px 6px rgba(0, 0, 0, 0.1)', 'marginBottom': '20px'}  # Adicionando margem inferior
                         ),
                     ],
+                    xs=12,
+                    sm=12,
                     md=9,  # A coluna de gráficos ocupa 9 das 12 colunas do grid
                 ),
             ],
