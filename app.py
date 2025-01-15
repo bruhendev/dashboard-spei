@@ -4,7 +4,9 @@ from dash import Input, Output, dcc, html
 import spei as si
 import pandas as pd
 import plotly.graph_objs as go
+import plotly.express as px
 import dash_bootstrap_components as dbc
+from datetime import datetime
 
 # Função para extrair dados (sem alterações)
 def extrair_dados(path_etp, path_prp, acumulado=1):
@@ -56,35 +58,166 @@ spei_1 = si.spei(pd.Series(dados_1['dados']))
 def filtrar_por_ano(spei, ano_inicial, ano_final):
     return spei[(spei.index.year >= ano_inicial) & (spei.index.year <= ano_final)]
 
-# Função para categorizar SPEI (sem alterações)
+# Função para categorizar o SPEI com as novas categorias
 def categorizar_spei(spei_value):
-    if spei_value > 2.33:
+    if spei_value >= 2.00:
         return 'Umidade extrema'
-    elif spei_value > 1.65:
+    elif 1.50 <= spei_value < 2.00:
         return 'Umidade severa'
-    elif spei_value > 1.28:
+    elif 1.00 <= spei_value < 1.50:
         return 'Umidade moderada'
-    elif spei_value > 0.84:
-        return 'Condição normal'
-    elif spei_value > -0.84:
-        return 'Condição normal'
-    elif spei_value > -1.28:
+    elif 0 <= spei_value < 1.00:
+        return 'Umidade fraca'
+    elif -0.99 <= spei_value < 0:
+        return 'Seca fraca'
+    elif -1.50 <= spei_value < -1.00:
         return 'Seca moderada'
-    elif spei_value > -1.65:
+    elif -1.99 <= spei_value < -1.50:
         return 'Seca severa'
-    elif spei_value > -2.33:
-        return 'Seca extrema'
     else:
         return 'Seca extrema'
 
-app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.FLATLY], title='Variabilidade do clima em Paragominas')
+
+# Definindo variáveis de estilo
+CARD_STYLE = {
+    'boxShadow': '0 4px 6px rgba(0, 0, 0, 0.1)',
+    'borderRadius': '10px',
+    'marginBottom': '20px',
+    'border': 'none'
+}
+
+TITLE_STYLE = {
+    'color': '#2C3E50',
+    'fontWeight': '600',
+    'textAlign': 'center',
+    'marginBottom': '20px'
+}
+
+DROPDOWN_STYLE = {
+    'marginBottom': '15px',
+    'borderRadius': '5px'
+}
+
+# Define modern footer styles
+FOOTER_STYLE = {
+    'backgroundColor': '#1e3a8a',  # Dark blue background
+    'color': '#ffffff',
+    'padding': '60px 0 40px 0',
+    'marginTop': '50px',
+    'width': '100%'
+}
+
+FOOTER_HEADING_STYLE = {
+    'fontSize': '28px',
+    'fontWeight': '700',
+    'marginBottom': '24px',
+    'color': '#ffffff'
+}
+
+FOOTER_LINK_STYLE = {
+    'color': '#60a5fa',  # Light blue for links
+    'textDecoration': 'none',
+    'fontSize': '16px',
+    'display': 'block',
+    'marginBottom': '12px',
+    'transition': 'color 0.3s ease'
+}
+
+CONTACT_ITEM_STYLE = {
+    'marginBottom': '16px',
+    'fontSize': '16px',
+    'color': '#cbd5e1'  # Light gray text
+}
+
+SOCIAL_ICON_STYLE = {
+    'color': '#60a5fa',
+    'fontSize': '24px',
+    'marginRight': '20px',
+    'transition': 'color 0.3s ease'
+}
+
+# Create modern footer component
+footer = html.Footer(
+    dbc.Container(
+        [
+            dbc.Row(
+                [
+                    # Left Column - About
+                    dbc.Col(
+                        [
+                            html.H2("VARIABILIDADE DA SECA NA REGIÃO DE PARAGOMINAS", style=FOOTER_HEADING_STYLE),
+                            html.P(
+                                "Desenvolvido no âmbito do Programa de Pós-Graduação em Gestão de Riscos "
+                                "e Desastres Naturais na Amazônia (PPGGRD).",
+                                style={'color': '#cbd5e1', 'fontSize': '16px', 'maxWidth': '400px', 'lineHeight': '1.6'}
+                            )
+                        ],
+                        md=4,
+                        className="mb-4 mb-md-0"
+                    ),
+                    
+                    # Middle Column - Links
+                    dbc.Col(
+                        [
+                            html.H3("Links Úteis", style={'fontSize': '20px', 'fontWeight': '600', 'marginBottom': '20px', 'color': '#ffffff'}),
+                            html.A("Universidade Federal do Pará - UFPA", href="https://portal.ufpa.br/", target="_blank", style=FOOTER_LINK_STYLE),
+                            html.A("Instituto de Geociências  - IG", href="https://ig.ufpa.br/", target="_blank", style=FOOTER_LINK_STYLE),
+                            html.A(" Programa de Pós-Graduação em Gestão de Risco e Desastre na Amazônia - PPGGRD", href="https://ppggrd.propesp.ufpa.br/", target="_blank", style=FOOTER_LINK_STYLE),
+                        ],
+                        md=4,
+                        className="mb-4 mb-md-0"
+                    ),
+                    
+                    # Right Column - Contact
+                    dbc.Col(
+                        [
+                            html.H3("Contato", style={'fontSize': '20px', 'fontWeight': '600', 'marginBottom': '20px', 'color': '#ffffff'}),
+                            html.Div([
+                                html.P("Email", style={'color': '#ffffff', 'fontWeight': '600', 'marginBottom': '4px'}),
+                                html.A("ppggrd@ufpa.br", href="mailto:ppggrd@ufpa.br", style=FOOTER_LINK_STYLE)
+                            ], style=CONTACT_ITEM_STYLE),
+                            html.Div([
+                                html.P("Endereço", style={'color': '#ffffff', 'fontWeight': '600', 'marginBottom': '4px'}),
+                                html.P("Universidade Federal do Pará", style=CONTACT_ITEM_STYLE),
+                                html.P("Instituto de Geociências", style=CONTACT_ITEM_STYLE),
+                            ]),
+                            # Social Media Icons
+                            html.Div(
+                                [
+                                    html.A(html.I(className="fab fa-instagram"), href="https://www.instagram.com/ppggrd_ufpa?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==", style=SOCIAL_ICON_STYLE),
+                                ],
+                                style={'marginTop': '24px'}
+                            )
+                        ],
+                        md=4
+                    ),
+                ],
+                className="mb-4"
+            ),
+            # Copyright row
+            dbc.Row(
+                dbc.Col(
+                    html.P(
+                        f"© {datetime.now().year} PPGGRD - UFPA. Todos os direitos reservados.",
+                        className="text-center",
+                        style={'borderTop': '1px solid #2d4a8c', 'paddingTop': '20px', 'marginTop': '20px', 'color': '#cbd5e1'}
+                    )
+                )
+            )
+        ],
+        fluid=True
+    ),
+    style=FOOTER_STYLE
+)
 
 # Card de controles atualizado
 controls = dbc.Card(
     [
         html.Div(
             [
-                dbc.Label("Selecionar intervalo de anos"),
+                html.H4("Filtros", style=TITLE_STYLE),
+                dbc.Label("Intervalo de Anos", style={'fontWeight': '500'}),
                 dcc.Dropdown(
                     id='intervalo-dropdown',
                     options=[
@@ -92,109 +225,180 @@ controls = dbc.Card(
                         {'label': '10 anos', 'value': '10'},
                         {'label': 'Todos os anos', 'value': 'all'}
                     ],
-                    value='10',  # Padrão para 10 anos
+                    value='10',
                     clearable=False,
+                    style=DROPDOWN_STYLE
                 ),
-                # Definindo o dropdown de ano
-                dbc.Label("Selecionar ano"),
+                dbc.Label("Ano", style={'fontWeight': '500', 'marginTop': '10px'}),
                 dcc.Dropdown(
                     id='ano-dropdown',
-                    options=[],  # Inicialmente vazio
-                    value=None,  # Inicialmente None
+                    options=[],
+                    value=None,
                     clearable=False,
+                    style=DROPDOWN_STYLE
                 ),
             ]
         ),
     ],
     body=True,
+    style=CARD_STYLE
 )
 
-# Layout do aplicativo (sem alterações)
+# Coordenadas de Paragominas
+lat = -3.0551
+lon = -47.3497
+
+# Criando um mapa com Plotly
+mapa_paragominas = px.scatter_mapbox(
+    lat=[lat], 
+    lon=[lon], 
+    hover_name=["Paragominas"],
+    color=["Paragominas"], 
+    size=[10],  # Tamanho do marcador
+    title="Localização de Paragominas - PA",  # Título do mapa
+)
+
+# Atualizando o layout do mapa
+mapa_paragominas.update_layout(
+    mapbox_style="open-street-map",  # Estilo do mapa
+    mapbox_zoom=6,  # Zoom ajustado para abrir mais a área
+    mapbox_center={"lat": lat, "lon": lon},  # Centraliza Paragominas
+    showlegend=False,  # Remover legenda
+    margin={"r":0,"t":40,"l":0,"b":0}  # Remover margens do gráfico
+)
+
+
 app.layout = dbc.Container(
     [
-        html.H1("Dashboard de SPEI"),
-        html.Hr(),
+        html.Link(
+        rel="stylesheet",
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    ),
+
+        # Banner (Logo no topo)
+        # Navbar com título
+        dbc.Navbar(
+            dbc.Container(
+                [
+                    dbc.Row(
+                        dbc.Col(
+                            html.H1("VARIABILIDADE DA SECA NA REGIÃO DE PARAGOMINAS", 
+                                    style={
+                                        'color': '#FFFFFF',  # Cor do título na navbar
+                                        'fontWeight': '600',  # Negrito
+                                        'fontSize': '24px',  # Tamanho da fonte
+                                    }),
+                        ),
+                        align="center",  # Centraliza o conteúdo
+                    ),
+                ]
+            ),
+            color="primary",  # Cor de fundo da navbar (pode ser 'primary', 'secondary', etc.)
+            dark=True,  # Para garantir que o texto fique visível (fundo escuro e texto claro)
+            style={'marginBottom': '30px'},  # Adiciona margem inferior para descolar a navbar
+        ),
+        
+        # Layout com duas colunas principais (esquerda para controles, direita para gráficos)
         dbc.Row(
             [
-                dbc.Col(controls, md=4),
+                # Coluna para os controles
                 dbc.Col(
-                    dbc.Card(
-                        [
-                            dbc.CardHeader("SPEI"),
-                            dcc.Graph(id='spei-graph', config={'responsive': True}, style={'width': '100%', 'height': '400px'})
-                        ],
-                        className='card-shadow',
-                    ), md=8),
+                    [
+                        controls,
+                         html.H3(
+                            "Dashboard SPEI", 
+                            style={
+                                'fontWeight': '600',  # Negrito
+                                'fontSize': '24px',  # Tamanho maior
+                                'marginBottom': '15px',  # Espaço abaixo do título
+                                'color': '#007bff',  # Cor azul para o título
+                            }
+                        ),
+                        # Descrição do produto
+                        html.P(
+                            "Este produto apresenta os resultados de uma análise da variabilidade climática no município de Paragominas, no estado do Pará, Brasil, entre 1981 e 2022. O foco está na avaliação do índice SPEI (Standardized Precipitation Evapotranspiration Index).",
+                            style={'fontSize': '16px', 'lineHeight': '1.6', 'color': '#555555'}
+                        ),
+                        dcc.Graph(
+                            id="mapa-paragominas",
+                            figure=mapa_paragominas,
+                            config={"responsive": True},
+                        ),
+                    ],  # Coloque o controle aqui novamente se precisar, ou defina conforme o layout desejado
+                    md=3,  # A coluna de configurações ocupa 3 das 12 colunas do grid
+                    style={'backgroundColor': '#FFFFFF', 'padding': '20px', 'borderRadius': '8px', 'boxShadow': '0 4px 6px rgba(0, 0, 0, 0.1)'}
+                ),
+                
+                # Coluna para os gráficos (com vários gráficos empilhados verticalmente)
+                dbc.Col(
+                    [
+                        # Card de "Análise SPEI"
+                        dbc.Card(
+                            [
+                                dbc.CardHeader("Análise SPEI", style={'backgroundColor': '#F8F9FA', 'fontWeight': '600'}),
+                                dcc.Graph(id="spei-graph", config={'responsive': True}, style={'width': '100%', 'height': '400px'}),
+                            ],
+                            className="card-shadow",
+                            style={'boxShadow': '0 4px 6px rgba(0, 0, 0, 0.1)', 'marginBottom': '20px'}  # Adicionando margem inferior
+                        ),
+                        # Card de "Distribuição de Categorias"
+                        dbc.Card(
+                            [
+                                dbc.CardHeader("Distribuição de Categorias", style={'backgroundColor': '#F8F9FA', 'fontWeight': '600'}),
+                                dcc.Graph(id="barras-empilhadas-graph", config={'responsive': True}, style={'width': '100%', 'height': '400px'}),
+                            ],
+                            className="card-shadow",
+                            style={'boxShadow': '0 4px 6px rgba(0, 0, 0, 0.1)', 'marginBottom': '20px'}  # Adicionando margem inferior
+                        ),
+                        # Card de "Média Mensal"
+                        dbc.Card(
+                            [
+                                dbc.CardHeader("Média Mensal", style={'backgroundColor': '#F8F9FA', 'fontWeight': '600'}),
+                                dcc.Graph(id="media-mensal-graph", config={'responsive': True}, style={'width': '100%', 'height': '400px'}),
+                            ],
+                            className="card-shadow",
+                            style={'boxShadow': '0 4px 6px rgba(0, 0, 0, 0.1)', 'marginBottom': '20px'}  # Adicionando margem inferior
+                        ),
+                        # Card de "Histograma de SPEI"
+                        dbc.Card(
+                            [
+                                dbc.CardHeader("Histograma de SPEI", style={'backgroundColor': '#F8F9FA', 'fontWeight': '600'}),
+                                dcc.Graph(id="histograma-graph", config={'responsive': True}, style={'width': '100%', 'height': '400px'}),
+                            ],
+                            className="card-shadow",
+                            style={'boxShadow': '0 4px 6px rgba(0, 0, 0, 0.1)', 'marginBottom': '20px'}  # Adicionando margem inferior
+                        ),
+                        # Card de "Dispersão SPEI"
+                        dbc.Card(
+                            [
+                                dbc.CardHeader("Dispersão SPEI", style={'backgroundColor': '#F8F9FA', 'fontWeight': '600'}),
+                                dcc.Graph(id="scatter-graph", config={'responsive': True}, style={'width': '100%', 'height': '400px'}),
+                            ],
+                            className="card-shadow",
+                            style={'boxShadow': '0 4px 6px rgba(0, 0, 0, 0.1)', 'marginBottom': '20px'}  # Adicionando margem inferior
+                        ),
+                        # Card de "Boxplot SPEI por Ano"
+                        dbc.Card(
+                            [
+                                dbc.CardHeader("Boxplot SPEI por Ano", style={'backgroundColor': '#F8F9FA', 'fontWeight': '600'}),
+                                dcc.Graph(id="boxplot-graph", config={'responsive': True}, style={'width': '100%', 'height': '400px'}),
+                            ],
+                            className="card-shadow",
+                            style={'boxShadow': '0 4px 6px rgba(0, 0, 0, 0.1)', 'marginBottom': '20px'}  # Adicionando margem inferior
+                        ),
+                    ],
+                    md=9,  # A coluna de gráficos ocupa 9 das 12 colunas do grid
+                ),
             ],
-            align="center",
+            align="start",
+            style={'marginBottom': '20px'},
         ),
-        dbc.Row(
-            [
-                dbc.Col(
-                    dbc.Card(
-                        [
-                            dbc.CardHeader("Distribuição de Categorias de SPEI"),
-                            dcc.Graph(id='barras-empilhadas-graph', config={'responsive': True}, style={'width': '100%', 'height': '250px'}),
-                        ],
-                        className='card-shadow',
-                        style={'marginTop': '20px', 'marginBottom': '20px'}
-                    ),
-                    md=4
-                ),
-                dbc.Col(
-                    dbc.Card(
-                        [
-                            dbc.CardHeader("Média Mensal de SPEI"),
-                            dcc.Graph(id='media-mensal-graph', config={'responsive': True}, style={'height': '250px'}),
-                        ],
-                        className='card-shadow',
-                        style={'marginTop': '20px', 'marginBottom': '20px'}
-                    ),
-                    md=4
-                ),
-                dbc.Col(
-                    dbc.Card(
-                        [
-                            dbc.CardHeader("Histograma de SPEI"),
-                            dcc.Graph(id='histograma-graph', config={'responsive': True}, style={'height': '250px'}),
-                        ],
-                        className='card-shadow',
-                        style={'marginTop': '20px', 'marginBottom': '20px'}
-                    ),
-                    md=4
-                ),
-            ],
-            align="center",
-        ),
-        dbc.Row(
-            [
-                dbc.Col(
-                    dbc.Card(
-                        [
-                            dbc.CardHeader("Dispersão de SPEI ao longo do tempo"),
-                            dcc.Graph(id='scatter-graph', config={'responsive': True}, style={'height': '280px'}),
-                        ],
-                        className='card-shadow',
-                        style={'marginBottom': '20px'}
-                    ),
-                    md=6
-                ),
-                dbc.Col(
-                    dbc.Card(
-                        [
-                            dbc.CardHeader("Boxplot de SPEI por Ano"),
-                            dcc.Graph(id='boxplot-graph', config={'responsive': True}, style={'height': '280px'}),
-                        ],
-                        className='card-shadow',
-                        style={'marginBottom': '20px'}
-                    ),
-                    md=6
-                )
-            ],
-            align="center",
-        ),
+        
+        # Add the footer at the bottom
+        footer
     ],
-    fluid=True,
+    fluid=True,  # Para que o layout seja fluido e ocupe toda a largura da tela
+    style={'backgroundColor': '#F4F6F7'}  # Fundo levemente acinzentado
 )
 
 @app.callback(
@@ -253,7 +457,7 @@ def atualizar_graficos(intervalo):
     categorias = spei_filtrado.apply(categorizar_spei)
     dados_ano = spei_filtrado.groupby(spei_filtrado.index.year).apply(lambda x: x.apply(categorizar_spei).value_counts(normalize=True) * 100).unstack(fill_value=0)
 
-    font_style = dict(family='Arial, sans-serif', size=8, color='black')
+    font_style = dict(family='Arial, sans-serif', size=12, color='black')
 
     # Gráfico de linha SPEI
     linha_figure = {
@@ -290,60 +494,61 @@ def atualizar_graficos(intervalo):
     )
 }
 
-    # Dicionário de cores
+    # Dicionário de cores atualizado
     cores_categorias = {
-        'Seca extrema': '#8B1A1A',
-        'Seca severa': '#DE2929',
-        'Seca moderada': '#F3641D',
-        'Condição normal': '#22c55e',
-        'Umidade moderada': '#FDC404',
-        'Umidade severa': '#03F2FD',
-        'Umidade extrema': '#1771DE',
+        'Umidade extrema': '#1e3a8a',
+        'Umidade severa': '#1d4ed8',
+        'Umidade moderada': '#0ea5e9',
+        'Umidade fraca': '#93c5fd',
+        'Seca fraca': '#fca5a5',
+        'Seca moderada': '#ef4444',
+        'Seca severa': '#b91c1c',
+        'Seca extrema': '#7f1d1d',
     }
 
-    # Gráfico de barras empilhadas
+    # Gráfico de barras empilhadas atualizado
     barras_figure = {
-    'data': [
-        go.Bar(
-            x=dados_ano.index,
-            y=dados_ano.get(categoria, pd.Series([0] * len(dados_ano.index))),
-            name=categoria,
-            marker=dict(color=cores_categorias[categoria])
-        ) for categoria in [
-            'Umidade extrema',
-            'Umidade severa',
-            'Umidade moderada',
-            'Condição normal',
-            'Seca moderada',
-            'Seca severa',
-            'Seca extrema',             
-        ]
-    ],
-    'layout': go.Layout(
-        barmode='stack',
-        xaxis={
-            'title': 'Ano',
-            'title_font': dict(color='black', size=8),
-            'tickfont': dict(color='black', size=8),
-            'showgrid': True,
-            'gridcolor': 'lightgrey',
-        },
-        yaxis={
-            'title': 'Porcentagem',
-            'title_font': dict(color='black', size=8),
-            'tickfont': dict(color='black', size=8),
-            'showgrid': True,
-            'gridcolor': 'lightgrey',
-        },
-        plot_bgcolor='rgba(255, 255, 255, 1)',  # Fundo do gráfico
-        paper_bgcolor='rgba(255, 255, 255, 1)',  # Fundo da área do gráfico
-        font=dict(color='black', size=12),  # Tamanho da fonte
-        legend=dict(traceorder='normal', font=dict(size=8)),  # Tamanho da fonte da legenda
-        margin=dict(t=20, l=40, r=40, b=40),  # Margens
-        bargap=0.1  # Espaçamento entre as barras
-    )
-}
-
+        'data': [
+            go.Bar(
+                x=dados_ano.index,
+                y=dados_ano.get(categoria, pd.Series([0] * len(dados_ano.index))),
+                name=categoria,
+                marker=dict(color=cores_categorias[categoria])  # Usando as cores atualizadas
+            ) for categoria in [
+                'Umidade extrema',
+                'Umidade severa',
+                'Umidade moderada',
+                'Umidade fraca',
+                'Seca fraca',
+                'Seca moderada',
+                'Seca severa',
+                'Seca extrema',             
+            ]
+        ],
+        'layout': go.Layout(
+            barmode='stack',
+            xaxis={
+                'title': 'Ano',
+                'title_font': dict(color='black', size=12),
+                'tickfont': dict(color='black', size=12),
+                'showgrid': True,
+                'gridcolor': 'lightgrey',
+            },
+            yaxis={
+                'title': 'Porcentagem',
+                'title_font': dict(color='black', size=12),
+                'tickfont': dict(color='black', size=12),
+                'showgrid': True,
+                'gridcolor': 'lightgrey',
+            },
+            plot_bgcolor='rgba(255, 255, 255, 1)',  # Fundo do gráfico
+            paper_bgcolor='rgba(255, 255, 255, 1)',  # Fundo da área do gráfico
+            font=dict(color='black', size=12),  # Tamanho da fonte
+            legend=dict(traceorder='normal', font=dict(size=12)),  # Tamanho da fonte da legenda
+            margin=dict(t=20, l=40, r=40, b=40),  # Margens
+            bargap=0.1  # Espaçamento entre as barras
+        )
+    }
 
     # Gráfico de média mensal
     media_mensal = spei_filtrado.resample('M').mean()
@@ -362,21 +567,21 @@ def atualizar_graficos(intervalo):
     'layout': go.Layout(
         xaxis={
             'title': 'Meses',
-            'title_font': dict(color='black', size=8),
-            'tickfont': dict(color='black', size=8),
+            'title_font': dict(color='black', size=12),
+            'tickfont': dict(color='black', size=12),
             'showgrid': True,
             'gridcolor': 'lightgrey',  # Cor da grade
         },
         yaxis={
             'title': 'SPEI',
-            'title_font': dict(color='black', size=8),
-            'tickfont': dict(color='black', size=8),
+            'title_font': dict(color='black', size=12),
+            'tickfont': dict(color='black', size=12),
             'showgrid': True,
             'gridcolor': 'lightgrey',
         },
         plot_bgcolor='rgba(255, 255, 255, 1)',  # Fundo do gráfico
         paper_bgcolor='rgba(255, 255, 255, 1)',  # Fundo da área do gráfico
-        font=dict(color='black', size=8),  # Tamanho da fonte
+        font=dict(color='black', size=12),  # Tamanho da fonte
         margin=dict(t=20, l=40, r=25, b=40),  # Margens
     )
 }
@@ -392,21 +597,21 @@ def atualizar_graficos(intervalo):
         'layout': go.Layout(
             xaxis={
                 'title': 'SPEI',
-                'title_font': dict(color='black', size=8),
-                'tickfont': dict(color='black', size=8),
+                'title_font': dict(color='black', size=12),
+                'tickfont': dict(color='black', size=12),
                 'showgrid': True,
                 'gridcolor': 'lightgrey',  # Cor da grade
             },
             yaxis={
                 'title': 'Frequência',
-                'title_font': dict(color='black', size=8),
-                'tickfont': dict(color='black', size=8),
+                'title_font': dict(color='black', size=12),
+                'tickfont': dict(color='black', size=12),
                 'showgrid': True,
                 'gridcolor': 'lightgrey',
             },
             plot_bgcolor='rgba(255, 255, 255, 1)',  # Fundo do gráfico
             paper_bgcolor='rgba(255, 255, 255, 1)',  # Fundo da área do gráfico
-            font=dict(color='black', size=8),  # Tamanho da fonte
+            font=dict(color='black', size=12),  # Tamanho da fonte
             margin=dict(t=20, l=40, r=25, b=40),  # Margens
         )
     }
@@ -425,23 +630,23 @@ def atualizar_graficos(intervalo):
     'layout': go.Layout(
         xaxis={
             'title': 'Data',
-            'title_font': dict(color='black', size=8),  # Tamanho da fonte do título
-            'tickfont': dict(color='black', size=8),
+            'title_font': dict(color='black', size=12),  # Tamanho da fonte do título
+            'tickfont': dict(color='black', size=12),
             'showgrid': True,
             'gridcolor': 'lightgrey'  # Cor da grade
         },
         yaxis={
             'title': 'SPEI',
             'range': [-3, 3],
-            'title_font': dict(color='black', size=8),  # Tamanho da fonte do título
-            'tickfont': dict(color='black', size=8),
+            'title_font': dict(color='black', size=12),  # Tamanho da fonte do título
+            'tickfont': dict(color='black', size=12),
             'showgrid': True,
             'gridcolor': 'lightgrey'  # Cor da grade
         },
         plot_bgcolor='rgba(255, 255, 255, 1)',  # Fundo do gráfico
         paper_bgcolor='rgba(255, 255, 255, 1)',  # Fundo da área do gráfico
         margin=dict(t=20, l=40, r=25, b=40),  # Margens
-        font=dict(color='black', size=8)  # Tamanho da fonte
+        font=dict(color='black', size=12)  # Tamanho da fonte
     )
 }
 
@@ -460,26 +665,26 @@ def atualizar_graficos(intervalo):
             yaxis={
                 'title': 'SPEI',
                 'range': [-3, 3],
-                'title_font': dict(color='black', size=8),  # Tamanho da fonte do título
-                'tickfont': dict(color='black', size=8),
+                'title_font': dict(color='black', size=12),  # Tamanho da fonte do título
+                'tickfont': dict(color='black', size=12),
                 'showgrid': True,
                 'gridcolor': 'lightgrey'  # Cor da grade
             },
             xaxis={
                 'title': 'Ano',
-                'title_font': dict(color='black', size=8),  # Tamanho da fonte do título
-                'tickfont': dict(color='black', size=8),
+                'title_font': dict(color='black', size=12),  # Tamanho da fonte do título
+                'tickfont': dict(color='black', size=12),
                 'showgrid': True,
                 'gridcolor': 'lightgrey'  # Cor da grade
             },
             plot_bgcolor='rgba(255, 255, 255, 1)',  # Fundo do gráfico
             paper_bgcolor='rgba(255, 255, 255, 1)',  # Fundo da área do gráfico
             margin=dict(t=30, l=40, r=25, b=40),  # Margens
-            font=dict(color='black', size=8)  # Tamanho da fonte
+            font=dict(color='black', size=12)  # Tamanho da fonte
         )
     }
 
     return linha_figure, barras_figure, media_mensal_figure, histograma_figure, scatter_figure, boxplot_figure 
 
 if __name__ == "__main__":
-    app.run_server(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 8050)))
+    app.run_server(debug=True, host='127.0.0.1', port=int(os.environ.get('PORT', 8050)))
